@@ -1,4 +1,6 @@
-﻿namespace Microsoft.eShopOnContainers.BuildingBlocks.EventBusRabbitMQ;
+﻿using System.Collections.Generic;
+
+namespace Microsoft.eShopOnContainers.BuildingBlocks.EventBusRabbitMQ;
 
 public class EventBusRabbitMQ : IEventBus, IDisposable
 {
@@ -220,7 +222,7 @@ public class EventBusRabbitMQ : IEventBus, IDisposable
                                 durable: true,
                                 exclusive: false,
                                 autoDelete: false,
-                                arguments: null);
+                                arguments: new Dictionary<string, object>());
 
         channel.CallbackException += (sender, ea) =>
         {

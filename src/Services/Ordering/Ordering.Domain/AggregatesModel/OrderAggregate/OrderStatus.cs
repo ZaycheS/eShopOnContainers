@@ -11,6 +11,8 @@ public class OrderStatus
     public static OrderStatus Paid = new OrderStatus(4, nameof(Paid).ToLowerInvariant());
     public static OrderStatus Shipped = new OrderStatus(5, nameof(Shipped).ToLowerInvariant());
     public static OrderStatus Cancelled = new OrderStatus(6, nameof(Cancelled).ToLowerInvariant());
+    public static OrderStatus AwaitingCouponValidation = new OrderStatus(7, nameof(AwaitingCouponValidation));
+    public static OrderStatus Validated = new OrderStatus(8, nameof(Validated));
 
     public OrderStatus(int id, string name)
         : base(id, name)

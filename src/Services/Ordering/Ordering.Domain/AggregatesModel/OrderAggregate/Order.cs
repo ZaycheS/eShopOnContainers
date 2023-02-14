@@ -1,4 +1,5 @@
 ﻿using Microsoft.eShopOnContainers.Services.Ordering.Domain.Events;
+using Ordering.Domain.Events;
 
 namespace Microsoft.eShopOnContainers.Services.Ordering.Domain.AggregatesModel.OrderAggregate;
 
@@ -17,9 +18,16 @@ public class Order
     private int? _buyerId;
 
     public OrderStatus OrderStatus { get; private set; }
+
+    public bool? DiscountConfirmed { get; private set; }
+
     private int _orderStatusId;
 
     private string _description;
+
+    public string DiscountCode { get; private set; }
+
+    public decimal? Discount { get; private set; }
 
 
 
@@ -49,13 +57,15 @@ public class Order
     }
 
     public Order(string userId, string userName, Address address, int cardTypeId, string cardNumber, string cardSecurityNumber,
-            string cardHolderName, DateTime cardExpiration, int? buyerId = null, int? paymentMethodId = null) : this()
+            string cardHolderName, DateTime cardExpiration, string discountCode, decimal? discount, int? buyerId = null, int? paymentMethodId = null) : this()
     {
         _buyerId = buyerId;
         _paymentMethodId = paymentMethodId;
         _orderStatusId = OrderStatus.Submitted.Id;
         _orderDate = DateTime.UtcNow;
         Address = address;
+        DiscountCode = discountCode;
+        Discount = discountCode == null ? null : discount;
 
         // Add the OrderStarterDomainEvent to the domain events collection 
         // to be raised/dispatched when comitting changes into the Database [ After DbContext.SaveChanges() ]
@@ -171,6 +181,50 @@ public class Order
             var itemsStockRejectedDescription = string.Join(", ", itemsStockRejectedProductNames);
             _description = $"The product items don't have stock: ({itemsStockRejectedDescription}).";
         }
+    }
+
+    //public void ProcessStockConfirmed()
+    //{
+    //    // If there's no Couponm, then it's validated
+    //    if (DiscountCode == null)
+    //    {
+    //        if (_orderStatusId != OrderStatus.AwaitingStockValidation.Id)
+    //        {
+    //            StatusChangeException(OrderStatus.Validated);
+    //        }
+
+    //        _orderStatusId = OrderStatus.Validated.Id;
+    //        _description = "All the items were confirmed with available stock.";
+
+    //        AddDomainEvent(new OrderStatusChangedToValidatedDomainEvent(Id));
+    //    }
+    //    else
+    //    {
+    //        if (_orderStatusId != OrderStatus.AwaitingStockValidation.Id)
+    //        {
+    //            StatusChangeException(OrderStatus.AwaitingCouponValidation);
+    //        }
+
+    //        _orderStatusId = OrderStatus.AwaitingCouponValidation.Id;
+    //        _description = "Validate discount code";
+
+    //        AddDomainEvent(new OrderStatusChangedToAwaitingCouponValidationDomainEvent(Id, DiscountCode));
+    //    }
+    //}
+
+    public void ProcessCouponConfirmed()
+    {
+        if (_orderStatusId != OrderStatus.AwaitingCouponValidation.Id)
+        {
+            StatusChangeException(OrderStatus.Validated);
+        }
+
+        DiscountConfirmed = true;
+
+        _orderStatusId = OrderStatus.Validated.Id;
+        _description = "Discount coupon validated.";
+
+        AddDomainEvent(new OrderStatusChangedToValidatedDomainEvent(Id));
     }
 
     private void AddOrderStartedDomainEvent(string userId, string userName, int cardTypeId, string cardNumber,
